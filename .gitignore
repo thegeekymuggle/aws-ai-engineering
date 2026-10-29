@@ -1,2 +1,6 @@
 out.json
 function.zip
+
+.venv/
+cdk.out/
+__pycache__/

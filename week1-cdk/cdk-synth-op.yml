@@ -1,0 +1,423 @@
+Resources:
+  DataBucketE3889A50:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: aws-cdk:auto-delete-objects
+          Value: "true"
+        - Key: aws-cdk:cr-owned:543166c1
+          Value: "true"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Week1CdkStack/DataBucket/Resource
+  DataBucketPolicy3231C704:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: DataBucketE3889A50
+      PolicyDocument:
+        Statement:
+          - Action: s3:*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+            Effect: Deny
+            Principal:
+              AWS: "*"
+            Resource:
+              - Fn::GetAtt:
+                  - DataBucketE3889A50
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - DataBucketE3889A50
+                        - Arn
+                    - /*
+          - Action:
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:List*
+              - s3:PutBucketPolicy
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::GetAtt:
+                  - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+                  - Arn
+            Resource:
+              - Fn::GetAtt:
+                  - DataBucketE3889A50
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - DataBucketE3889A50
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+    Metadata:
+      aws:cdk:path: Week1CdkStack/DataBucket/Policy/Resource
+  DataBucketAutoDeleteObjectsCustomResource9FB51BF3:
+    Type: Custom::S3AutoDeleteObjects
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F
+          - Arn
+      BucketName:
+        Ref: DataBucketE3889A50
+    DependsOn:
+      - DataBucketPolicy3231C704
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Week1CdkStack/DataBucket/AutoDeleteObjectsCustomResource/Default
+  CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role
+  CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cdk-hnb659fds-assets-485894379599-us-east-1
+        S3Key: faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip
+      Timeout: 900
+      MemorySize: 128
+      Handler: index.handler
+      Role:
+        Fn::GetAtt:
+          - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+          - Arn
+      Runtime: nodejs24.x
+      Description:
+        Fn::Join:
+          - ""
+          - - "Lambda function for auto-deleting objects in "
+            - Ref: DataBucketE3889A50
+            - " S3 bucket."
+    DependsOn:
+      - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler
+      aws:asset:path: asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6
+      aws:asset:property: Code
+  SeedDataAwsCliLayerFC7E6850:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket: cdk-hnb659fds-assets-485894379599-us-east-1
+        S3Key: 98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip
+      Description: /opt/awscli/aws
+    Metadata:
+      aws:cdk:path: Week1CdkStack/SeedData/AwsCliLayer/Resource
+      aws:asset:path: asset.98f62bef9320f8c0a0a7be21d7c746f069131f196f51ffe3008a6bb730b368ec.zip
+      aws:asset:is-bundled: false
+      aws:asset:property: Content
+  SeedDataCustomResourceF15F8534:
+    Type: Custom::CDKBucketDeployment
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+          - Arn
+      SourceBucketNames:
+        - cdk-hnb659fds-assets-485894379599-us-east-1
+      SourceObjectKeys:
+        - 2a154be4543bb424ad2f28ab9b52c7d6b38f51fa8e3679d496155a30e2ef3b3c.zip
+      SourceMarkers:
+        - {}
+      SourceMarkersConfig:
+        - {}
+      DestinationBucketName:
+        Ref: DataBucketE3889A50
+      WaitForDistributionInvalidation: true
+      Prune: true
+      OutputObjectKeys: true
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Week1CdkStack/SeedData/CustomResource/Default
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+            Effect: Allow
+            Resource:
+              - arn:aws:s3:::cdk-hnb659fds-assets-485894379599-us-east-1
+              - arn:aws:s3:::cdk-hnb659fds-assets-485894379599-us-east-1/*
+          - Action:
+              - s3:Abort*
+              - s3:DeleteObject*
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+              - s3:PutObject
+              - s3:PutObjectLegalHold
+              - s3:PutObjectRetention
+              - s3:PutObjectTagging
+              - s3:PutObjectVersionTagging
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - DataBucketE3889A50
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - DataBucketE3889A50
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+      PolicyName: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      Roles:
+        - Ref: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures:
+        - arm64
+      Code:
+        S3Bucket: cdk-hnb659fds-assets-485894379599-us-east-1
+        S3Key: 35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0.zip
+      Environment:
+        Variables:
+          AWS_CA_BUNDLE: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+      Handler: index.handler
+      Layers:
+        - Ref: SeedDataAwsCliLayerFC7E6850
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+          - Arn
+      Runtime: python3.13
+      Timeout: 900
+    DependsOn:
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+      - CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource
+      aws:asset:path: asset.35328da138f26fbd9160297abc9a2522d93dbf75878cd5114a9c050419fc1ce0
+      aws:asset:is-bundled: false
+      aws:asset:property: Code
+  CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CLogGroup817B64E9:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+          - ""
+          - - /aws/lambda/
+            - Ref: CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+      RetentionInDays: 731
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/LogGroup/Resource
+  ReaderLogs80F753CE:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: Week1CdkStack/ReaderLogs/Resource
+  ReaderServiceRole8283AF10:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Reader/ServiceRole/Resource
+  ReaderServiceRoleDefaultPolicy01D93D42:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetBucket*
+              - s3:GetObject*
+              - s3:List*
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - DataBucketE3889A50
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - DataBucketE3889A50
+                        - Arn
+                    - /*
+        Version: "2012-10-17"
+      PolicyName: ReaderServiceRoleDefaultPolicy01D93D42
+      Roles:
+        - Ref: ReaderServiceRole8283AF10
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Reader/ServiceRole/DefaultPolicy/Resource
+  ReaderF7BF189D:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cdk-hnb659fds-assets-485894379599-us-east-1
+        S3Key: 68711e7290ac0e0550a686194a17a3634c250ddb5657419d6ce6295eda924a78.zip
+      Environment:
+        Variables:
+          BUCKET:
+            Ref: DataBucketE3889A50
+      Handler: lambda_function.lambda_handler
+      LoggingConfig:
+        LogGroup:
+          Ref: ReaderLogs80F753CE
+      MemorySize: 256
+      Role:
+        Fn::GetAtt:
+          - ReaderServiceRole8283AF10
+          - Arn
+      Runtime: python3.13
+      Timeout: 10
+    DependsOn:
+      - ReaderServiceRoleDefaultPolicy01D93D42
+      - ReaderServiceRole8283AF10
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Reader/Resource
+      aws:asset:path: asset.68711e7290ac0e0550a686194a17a3634c250ddb5657419d6ce6295eda924a78
+      aws:asset:is-bundled: false
+      aws:asset:property: Code
+  ApiF70053CD:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Api
+      ProtocolType: HTTP
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Api/Resource
+  ApiDefaultStage189A7074:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId:
+        Ref: ApiF70053CD
+      AutoDeploy: true
+      StageName: $default
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Api/DefaultStage/Resource
+  ApiGETreadReadIntegrationE8829BB5:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: ApiF70053CD
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::GetAtt:
+          - ReaderF7BF189D
+          - Arn
+      PayloadFormatVersion: "2.0"
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Api/GET--read/ReadIntegration/Resource
+  ApiGETreadReadIntegrationPermission78C0D000:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - ReaderF7BF189D
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:aws:execute-api:us-east-1:485894379599:"
+            - Ref: ApiF70053CD
+            - /*/*/read
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Api/GET--read/ReadIntegration-Permission
+  ApiGETreadE2176BCA:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: ApiF70053CD
+      AuthorizationType: NONE
+      RouteKey: GET /read
+      Target:
+        Fn::Join:
+          - ""
+          - - integrations/
+            - Ref: ApiGETreadReadIntegrationE8829BB5
+    Metadata:
+      aws:cdk:path: Week1CdkStack/Api/GET--read/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/9VVS2/bMAz+LdVxUL2t3VYgN7fdo0C2BnGxSxAEisw6amTJkKhknuH/Pki2HPexYhh66cGQ9ZEiP5IidZKcnH1M3h2xvT3m+fZYinXSZMj4lrK9XTX2NGnOHd8CLhrCHOpLkIBwvb4DjpZM0DigZC01387cWgqecg7Wkgl5QygBdasNhyybRk0Dpd4xOdNS8JpMSA4Wja5Ju6QXt2rwVIpfQpEJGdPyfOxpEkQ26VTTR4zaJe1EnYtFQ9ZhGxiNvQzyf/XVHciQIZSgxq7OmYVFCPjwLVtqT1dNDpXUtdfvrVwOAGXWAtok9UtLJSvXOUuai1s1ZTWYn2Cs0IpmQhUSUKsvTnEUWi0a4pzI+xQzwzcCgaMz0EPSH7dk4iktfRF2wmjlXQ4K3tXMmUrbeAhFCdpFDaNlFJRQalNn4ncEoNpACYbJDLVhBYxEu4of/jK3VoDxKljgzgisvxrtqgjeCgm2tghlZKaLoNBvuc6j6Q1TuQQT+TnlCXdFpQ1hef4dkOUMWRc39ddt+bQoVGdJR/n8nyS++oR9Hod0SEwnnI7D99gTt+i+60dh30/QCzALzRur5v9nYEphfZe0VLAyaeZagi+nta6E/Lwmk4ZURiguKiZTzrUb2Hc6/kAa7PX+SckUKyAPzS7AZ6C5h9Wp6XVjqm70LLqIY23R9FJExjdXSgoFg2zI8rPC5+2+8gBDJT012k9hzzgeuNHz0EwP7DyG83w0jA+UnoJfyn4g3nFuqdSFTZpp3waLZuiIH2x0n//24vm3EEF1pTnrLEdbLWWVKBjCntW7k6T5hlillRhaweumlaAez5AVsIho2AV8rh32uN9eKYTCsDDwovII6wriENqWXjiLupyD1c5wuOc0gg90ZkbvRA7GP4Q0vGeeh1BF/6qtwjRdsb3lUiTp3l5IESaMT6q3e+2wctjSWY0brd6eJu8/JJ+O7qwQx/18SObd+gcuudZpsQgAAA==
+    Metadata:
+      aws:cdk:path: Week1CdkStack/CDKMetadata/Default
+Outputs:
+  ApiUrl:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: ApiF70053CD
+          - .execute-api.us-east-1.
+          - Ref: AWS::URLSuffix
+          - /read?key=hello.txt
+  BucketName:
+    Value:
+      Ref: DataBucketE3889A50
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
