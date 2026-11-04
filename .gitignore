@@ -4,3 +4,5 @@ function.zip
 .venv/
 cdk.out/
 __pycache__/
+
+guardrail_id.txt
